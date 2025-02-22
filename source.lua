@@ -14,7 +14,8 @@ local Library = {
         Glow = Color3.fromRGB(100, 190, 255)
     },
     Flags = {},
-    ToggleKey = Enum.KeyCode.RightShift
+    ToggleKey = Enum.KeyCode.RightShift,
+    Windows = {} -- Add this to track all windows
 }
 
 -- Utility Functions
@@ -188,7 +189,7 @@ function Library:CreateWindow(title)
     end)
     
     CloseButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
+        window:Destroy()
     end)
     
     -- Container for tabs
@@ -247,11 +248,12 @@ function Library:CreateWindow(title)
             dragStart = input.Position
             startPos = MainFrame.Position
             
-            input.Changed:Connect(function()
+            local inputChanged = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
                 end
             end)
+            table.insert(window.Connections, inputChanged)
         end
     end)
     
@@ -406,7 +408,45 @@ function Library:CreateWindow(title)
         return tab
     end
     
+    -- Add destroy function
+    function window:Destroy()
+        -- Remove all connections
+        for _, connection in pairs(window.Connections or {}) do
+            connection:Disconnect()
+        end
+        
+        -- Destroy the ScreenGui with a fade out animation
+        TweenService:Create(MainFrame, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play()
+        
+        -- Remove from Library.Windows
+        for i, w in pairs(Library.Windows) do
+            if w == window then
+                table.remove(Library.Windows, i)
+                break
+            end
+        end
+        
+        task.wait(0.2)
+        ScreenGui:Destroy()
+    end
+    
+    -- Store connections for cleanup
+    window.Connections = {}
+    
+    -- Add window to Library.Windows
+    table.insert(Library.Windows, window)
+    
     return window
+end
+
+-- Add global destroy function
+function Library:DestroyAll()
+    for _, window in pairs(self.Windows) do
+        window:Destroy()
+    end
+    self.Windows = {}
 end
 
 return Library

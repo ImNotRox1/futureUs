@@ -3,13 +3,18 @@ local UserInputService = game:GetService("UserInputService")
 
 local Library = {
     Theme = {
-        Primary = Color3.fromRGB(24, 24, 36),
-        Secondary = Color3.fromRGB(32, 32, 48),
-        Accent = Color3.fromRGB(96, 76, 215),
-        Text = Color3.fromRGB(255, 255, 255),
-        TextDark = Color3.fromRGB(175, 175, 175),
-        Background = Color3.fromRGB(18, 18, 28)
-    }
+        Primary = Color3.fromRGB(20, 20, 30),
+        Secondary = Color3.fromRGB(30, 30, 45),
+        Accent = Color3.fromRGB(100, 190, 255),
+        AccentDark = Color3.fromRGB(70, 130, 180),
+        Text = Color3.fromRGB(240, 240, 240),
+        TextDark = Color3.fromRGB(160, 160, 160),
+        Background = Color3.fromRGB(15, 15, 20),
+        DarkContrast = Color3.fromRGB(12, 12, 18),
+        Glow = Color3.fromRGB(100, 190, 255)
+    },
+    Flags = {},
+    ToggleKey = Enum.KeyCode.RightShift
 }
 
 -- Utility Functions
@@ -23,6 +28,48 @@ local function Create(instanceType)
     end
 end
 
+local function AddRippleEffect(button)
+    local ripple = Create "Frame" {
+        Name = "Ripple",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 0.8,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(0, 0, 0, 0),
+        Parent = button
+    }
+    
+    Create "UICorner" {
+        CornerRadius = UDim.new(1, 0),
+        Parent = ripple
+    }
+    
+    local targetSize = UDim2.new(1.5, 0, 1.5, 0)
+    local fadeTime = 0.5
+    
+    TweenService:Create(ripple, TweenInfo.new(fadeTime), {
+        Size = targetSize,
+        BackgroundTransparency = 1
+    }):Play()
+    
+    game:GetService("Debris"):AddItem(ripple, fadeTime)
+end
+
+local function AddGlow(button)
+    local glow = Create "ImageLabel" {
+        Name = "Glow",
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://7603818383",
+        ImageColor3 = Library.Theme.Glow,
+        ImageTransparency = 0.8,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.new(1, 25, 1, 25),
+        Parent = button
+    }
+    return glow
+end
+
 function Library:CreateWindow(title)
     local window = {}
     
@@ -32,7 +79,7 @@ function Library:CreateWindow(title)
         ResetOnSpawn = false
     }
     
-    -- Handle different environments (executor vs Roblox Studio)
+    -- Handle different environments
     if syn then
         syn.protect_gui(ScreenGui)
         ScreenGui.Parent = game.CoreGui
@@ -44,60 +91,105 @@ function Library:CreateWindow(title)
     
     local MainFrame = Create "Frame" {
         Name = "MainFrame",
-        Size = UDim2.new(0, 650, 0, 450),
-        Position = UDim2.new(0.5, -325, 0.5, -225),
+        Size = UDim2.new(0, 600, 0, 400),
+        Position = UDim2.new(0.5, -300, 0.5, -200),
         BackgroundColor3 = Library.Theme.Background,
         BorderSizePixel = 0,
-        Parent = ScreenGui
+        Parent = ScreenGui,
+        Visible = true
     }
     
-    -- Main corner radius
+    -- Add shadow
+    local Shadow = Create "ImageLabel" {
+        Name = "Shadow",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, 47, 1, 47),
+        ZIndex = 0,
+        Image = "rbxassetid://6015897843",
+        ImageColor3 = Color3.new(0, 0, 0),
+        ImageTransparency = 0.5,
+        Parent = MainFrame
+    }
+    
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 10),
+        CornerRadius = UDim.new(0, 8),
         Parent = MainFrame
     }
     
-    -- Add gradient
-    local Gradient = Create "UIGradient" {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(230, 230, 230))
-        }),
-        Rotation = 45,
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.95),
-            NumberSequenceKeypoint.new(1, 0.97)
-        }),
-        Parent = MainFrame
-    }
-    
-    -- Top bar
+    -- Top bar with new modern design
     local TopBar = Create "Frame" {
         Name = "TopBar",
         Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = Library.Theme.Primary,
+        BackgroundColor3 = Library.Theme.DarkContrast,
         BorderSizePixel = 0,
         Parent = MainFrame
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 10),
+        CornerRadius = UDim.new(0, 8),
         Parent = TopBar
     }
     
-    -- Title
-    local TitleLabel = Create "TextLabel" {
-        Name = "Title",
-        Text = title,
+    -- Title with icon
+    local TitleContainer = Create "Frame" {
+        Name = "TitleContainer",
         Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 20, 0, 0),
+        Position = UDim2.new(0, 10, 0, 0),
         BackgroundTransparency = 1,
-        TextColor3 = Library.Theme.Text,
-        TextSize = 18,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
         Parent = TopBar
     }
+    
+    local TitleIcon = Create "ImageLabel" {
+        Name = "Icon",
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(0, 0, 0.5, -10),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://8997386536",
+        ImageColor3 = Library.Theme.Accent,
+        Parent = TitleContainer
+    }
+    
+    local TitleText = Create "TextLabel" {
+        Name = "Title",
+        Text = title,
+        Size = UDim2.new(1, -30, 1, 0),
+        Position = UDim2.new(0, 30, 0, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = Library.Theme.Text,
+        TextSize = 16,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = TitleContainer
+    }
+    
+    -- Close button
+    local CloseButton = Create "ImageButton" {
+        Name = "CloseButton",
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(1, -32, 0, 8),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://8997387827",
+        ImageColor3 = Library.Theme.TextDark,
+        Parent = TopBar
+    }
+    
+    CloseButton.MouseEnter:Connect(function()
+        TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+            ImageColor3 = Library.Theme.Accent
+        }):Play()
+    end)
+    
+    CloseButton.MouseLeave:Connect(function()
+        TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+            ImageColor3 = Library.Theme.TextDark
+        }):Play()
+    end)
+    
+    CloseButton.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
     
     -- Container for tabs
     local TabContainer = Create "Frame" {
@@ -139,7 +231,14 @@ function Library:CreateWindow(title)
         Parent = MainFrame
     }
     
-    -- Make window draggable
+    -- Toggle UI with key
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Library.ToggleKey then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end)
+    
+    -- Make window draggable with smooth dragging
     local dragging, dragInput, dragStart, startPos
     
     TopBar.InputBegan:Connect(function(input)
@@ -147,6 +246,12 @@ function Library:CreateWindow(title)
             dragging = true
             dragStart = input.Position
             startPos = MainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
         end
     end)
     
@@ -156,16 +261,17 @@ function Library:CreateWindow(title)
         end
     end)
     
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
-        if dragging then
-            local delta = dragInput.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            TweenService:Create(MainFrame, TweenInfo.new(0.1), {
+                Position = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + delta.Y
+                )
+            }):Play()
         end
     end)
     

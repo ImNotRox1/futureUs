@@ -209,9 +209,9 @@ function Library:CreateWindow(title)
         Parent = TabContainer
     }
     
-    -- Content area
-    local ContentArea = Create "Frame" {
-        Name = "ContentArea",
+    -- Content container
+    local ContentContainer = Create "Frame" {
+        Name = "ContentContainer",
         Size = UDim2.new(1, -170, 1, -50),
         Position = UDim2.new(0, 160, 0, 40),
         BackgroundColor3 = Library.Theme.Secondary,
@@ -222,7 +222,7 @@ function Library:CreateWindow(title)
     
     Create "UICorner" {
         CornerRadius = UDim.new(0, 10),
-        Parent = ContentArea
+        Parent = ContentContainer
     }
 
     -- Make window draggable with smooth dragging
@@ -263,7 +263,7 @@ function Library:CreateWindow(title)
             Name = name,
             Size = UDim2.new(1, -20, 0, 32),
             BackgroundColor3 = Library.Theme.InputBackground,
-            BackgroundTransparency = 1,
+            BackgroundTransparency = 0.9,
             Text = name,
             TextColor3 = Library.Theme.TextDark,
             TextSize = 14,
@@ -271,8 +271,13 @@ function Library:CreateWindow(title)
             Parent = TabContainer
         }
         
-        local TabContainer = Create "ScrollingFrame" {
-            Name = name.."Container",
+        Create "UICorner" {
+            CornerRadius = UDim.new(0, 6),
+            Parent = TabButton
+        }
+        
+        local TabPage = Create "ScrollingFrame" {
+            Name = name.."Page",
             Size = UDim2.new(1, -20, 1, -20),
             Position = UDim2.new(0, 10, 0, 10),
             BackgroundTransparency = 1,
@@ -282,48 +287,50 @@ function Library:CreateWindow(title)
             CanvasSize = UDim2.new(0, 0, 0, 0),
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
             Visible = false,
-            Parent = ContentArea
+            Parent = ContentContainer
         }
         
-        if #TabContainer:GetChildren() == 0 then
-            TabContainer.Visible = true
-            TabButton.TextColor3 = Library.Theme.Accent
-        end
-        
-        local ContainerLayout = Create "UIListLayout" {
-            Padding = UDim.new(0, 8),
-            Parent = TabContainer
+        local PageLayout = Create "UIListLayout" {
+            Padding = UDim.new(0, 6),
+            Parent = TabPage
         }
 
-        ContainerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            TabContainer.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y + 10)
-        end)
+        -- Make first tab visible by default
+        if #TabContainer:GetChildren() == 1 then
+            TabPage.Visible = true
+            TabButton.BackgroundTransparency = 0
+            TabButton.TextColor3 = Library.Theme.Text
+        end
         
         TabButton.MouseButton1Click:Connect(function()
-            for _, v in pairs(ContentArea:GetChildren()) do
+            -- Hide all other tab pages
+            for _, v in pairs(ContentContainer:GetChildren()) do
                 if v:IsA("ScrollingFrame") then
                     v.Visible = false
                 end
             end
-            TabContainer.Visible = true
+            TabPage.Visible = true
             
+            -- Reset all tab buttons
             for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
                     TweenService:Create(v, TweenInfo.new(0.2), {
+                        BackgroundTransparency = 0.9,
                         TextColor3 = Library.Theme.TextDark
-                    }):Play()
-                    TweenService:Create(v.Highlight, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 1
                     }):Play()
                 end
             end
             
+            -- Highlight active tab
             TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                TextColor3 = Library.Theme.Accent
+                BackgroundTransparency = 0,
+                TextColor3 = Library.Theme.Text
             }):Play()
-            TweenService:Create(TabButtonHighlight, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0
-            }):Play()
+        end)
+        
+        -- Update canvas size
+        PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabPage.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 10)
         end)
         
         function tab:CreateButton(text, callback)
@@ -336,7 +343,7 @@ function Library:CreateWindow(title)
                 BorderSizePixel = 0,
                 Text = "",
                 AutoButtonColor = false,
-                Parent = TabContainer
+                Parent = TabPage
             }
             
             Create "UICorner" {
@@ -408,7 +415,7 @@ function Library:CreateWindow(title)
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = Library.Theme.InputBackground,
                 BorderSizePixel = 0,
-                Parent = TabContainer
+                Parent = TabPage
             }
             
             Create "UICorner" {
@@ -521,7 +528,7 @@ function Library:CreateWindow(title)
                 Name = name,
                 Size = UDim2.new(1, 0, 0, 35),
                 BackgroundTransparency = 1,
-                Parent = TabContainer
+                Parent = TabPage
             }
             
             local SectionLabel = Create "TextLabel" {
@@ -558,7 +565,7 @@ function Library:CreateWindow(title)
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = Library.Theme.InputBackground,
                 BorderSizePixel = 0,
-                Parent = TabContainer
+                Parent = TabPage
             }
             
             Create "UICorner" {
@@ -683,7 +690,7 @@ function Library:CreateWindow(title)
                 Size = UDim2.new(1, 0, 0, 50),
                 BackgroundColor3 = Library.Theme.InputBackground,
                 BorderSizePixel = 0,
-                Parent = TabContainer
+                Parent = TabPage
             }
 
             Create "UICorner" {
@@ -822,7 +829,7 @@ function Library:CreateWindow(title)
                 Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = Library.Theme.InputBackground,
                 BorderSizePixel = 0,
-                Parent = TabContainer
+                Parent = TabPage
             }
 
             Create "UICorner" {

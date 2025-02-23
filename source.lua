@@ -6,15 +6,15 @@ local Players = game:GetService("Players")
 
 local Library = {
     Theme = {
-        Primary = Color3.fromRGB(24, 24, 36),
-        Secondary = Color3.fromRGB(30, 30, 45),
-        Accent = Color3.fromRGB(96, 76, 215),
-        AccentDark = Color3.fromRGB(86, 66, 205),
+        Background = Color3.fromRGB(20, 20, 25),
+        Accent = Color3.fromRGB(96, 110, 255),
+        AccentDark = Color3.fromRGB(76, 90, 235),
+        Secondary = Color3.fromRGB(25, 25, 30),
         Text = Color3.fromRGB(240, 240, 240),
-        TextDark = Color3.fromRGB(160, 160, 160),
-        InputBackground = Color3.fromRGB(35, 35, 50),
-        Divider = Color3.fromRGB(40, 40, 60),
-        SectionBackground = Color3.fromRGB(28, 28, 42)
+        TextDark = Color3.fromRGB(180, 180, 180),
+        InputBackground = Color3.fromRGB(30, 30, 35),
+        Divider = Color3.fromRGB(35, 35, 40),
+        Hover = Color3.fromRGB(40, 40, 45)
     },
     Flags = {},
     ToggleKey = Enum.KeyCode.RightShift,

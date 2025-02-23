@@ -4,19 +4,23 @@ local CoreGui = game:GetService("CoreGui")
 
 local Library = {
     Theme = {
-        Primary = Color3.fromRGB(30, 30, 35),
-        Secondary = Color3.fromRGB(25, 25, 30),
-        Accent = Color3.fromRGB(96, 130, 255),
-        AccentDark = Color3.fromRGB(76, 110, 235),
-        Text = Color3.fromRGB(240, 240, 240),
-        TextDark = Color3.fromRGB(140, 140, 150),
-        Background = Color3.fromRGB(20, 20, 25),
-        InputBackground = Color3.fromRGB(35, 35, 40)
+        Background = Color3.fromRGB(32, 32, 32), -- Dark background
+        Secondary = Color3.fromRGB(38, 38, 38), -- Slightly lighter
+        Accent = Color3.fromRGB(0, 122, 255), -- macOS blue
+        AccentDark = Color3.fromRGB(0, 102, 235),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextDark = Color3.fromRGB(180, 180, 180),
+        InputBackground = Color3.fromRGB(45, 45, 45),
+        WindowButtons = {
+            Close = Color3.fromRGB(255, 95, 87),
+            Minimize = Color3.fromRGB(255, 189, 46),
+            Maximize = Color3.fromRGB(39, 201, 63)
+        }
     },
     Flags = {},
     ToggleKey = Enum.KeyCode.RightShift,
     Windows = {},
-    UniqueId = "ModernUI_" .. game:GetService("HttpService"):GenerateGUID(false)
+    UniqueId = "MacUI_" .. game:GetService("HttpService"):GenerateGUID(false)
 }
 
 local function Create(instanceType)
@@ -51,7 +55,7 @@ function Library:CleanupPreviousInstances()
         if parent then
             -- Destroy any GUI with our name
             for _, gui in ipairs(parent:GetChildren()) do
-                if gui:IsA("ScreenGui") and gui.Name == "ModernUI" then
+                if gui:IsA("ScreenGui") and gui.Name == "MacUI" then
                     pcall(function() 
                         gui:Destroy()
                     end)
@@ -83,159 +87,181 @@ function Library:CleanupPreviousInstances()
 end
 
 function Library:CreateWindow(title)
-    -- Force cleanup of previous instances
     self:CleanupPreviousInstances()
-    task.wait(0.1) -- Small delay to ensure cleanup completes
     
     local window = {}
     
     local ScreenGui = Create "ScreenGui" {
-        Name = "ModernUI",
+        Name = "MacUI",
         ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     }
     
-    -- Add unique identifier
-    local Identifier = Create "StringValue" {
-        Name = "Identifier",
-        Value = self.UniqueId,
-        Parent = ScreenGui
-    }
-    
+    -- Protection and parenting logic
     if syn then
         syn.protect_gui(ScreenGui)
         ScreenGui.Parent = game.CoreGui
     elseif gethui then
         ScreenGui.Parent = gethui()
     else
-        ScreenGui.Parent = game:GetService("CoreGui")
+        ScreenGui.Parent = CoreGui
     end
     
-    -- Main container
+    -- Main window frame
     local MainFrame = Create "Frame" {
         Name = "MainFrame",
-        Size = UDim2.new(0, 500, 0, 350),
-        Position = UDim2.new(0.5, -250, 0.5, -175),
-        BackgroundColor3 = Library.Theme.Primary,
+        Size = UDim2.new(0, 600, 0, 400),
+        Position = UDim2.new(0.5, -300, 0.5, -200),
+        BackgroundColor3 = Library.Theme.Background,
         BorderSizePixel = 0,
         Parent = ScreenGui
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 12),
+        CornerRadius = UDim.new(0, 10),
         Parent = MainFrame
     }
     
-    CreateStroke(MainFrame)
+    -- Window shadow
+    local Shadow = Create "ImageLabel" {
+        Name = "Shadow",
+        Size = UDim2.new(1, 47, 1, 47),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://6015897843",
+        ImageColor3 = Color3.new(0, 0, 0),
+        ImageTransparency = 0.5,
+        Parent = MainFrame
+    }
     
-    -- Top bar with gradient
-    local TopBar = Create "Frame" {
-        Name = "TopBar",
-        Size = UDim2.new(1, 0, 0, 50),
+    -- Title bar
+    local TitleBar = Create "Frame" {
+        Name = "TitleBar",
+        Size = UDim2.new(1, 0, 0, 30),
         BackgroundColor3 = Library.Theme.Secondary,
         BorderSizePixel = 0,
         Parent = MainFrame
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 12),
-        Parent = TopBar
+        CornerRadius = UDim.new(0, 10),
+        Parent = TitleBar
     }
     
-    local TopBarGradient = Create "UIGradient" {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
-        }),
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.95),
-            NumberSequenceKeypoint.new(1, 0.97)
-        }),
-        Rotation = 45,
-        Parent = TopBar
-    }
-    
-    -- Title with icon
-    local TitleContainer = Create "Frame" {
-        Name = "TitleContainer",
-        Size = UDim2.new(0, 200, 1, 0),
+    -- Window buttons (traffic lights)
+    local ButtonHolder = Create "Frame" {
+        Name = "ButtonHolder",
+        Size = UDim2.new(0, 60, 1, -16),
+        Position = UDim2.new(0, 10, 0, 8),
         BackgroundTransparency = 1,
-        Parent = TopBar
+        Parent = TitleBar
     }
     
-    local Icon = Create "ImageLabel" {
-        Name = "Icon",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(0, 15, 0.5, -15),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://14299284116",
-        ImageColor3 = Library.Theme.Accent,
-        Parent = TitleContainer
+    -- Close button
+    local CloseButton = Create "TextButton" {
+        Name = "Close",
+        Size = UDim2.new(0, 12, 0, 12),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Library.Theme.WindowButtons.Close,
+        Text = "",
+        Parent = ButtonHolder
     }
     
+    Create "UICorner" {
+        CornerRadius = UDim.new(1, 0),
+        Parent = CloseButton
+    }
+    
+    -- Minimize button
+    local MinimizeButton = Create "TextButton" {
+        Name = "Minimize",
+        Size = UDim2.new(0, 12, 0, 12),
+        Position = UDim2.new(0, 24, 0, 0),
+        BackgroundColor3 = Library.Theme.WindowButtons.Minimize,
+        Text = "",
+        Parent = ButtonHolder
+    }
+    
+    Create "UICorner" {
+        CornerRadius = UDim.new(1, 0),
+        Parent = MinimizeButton
+    }
+    
+    -- Maximize button
+    local MaximizeButton = Create "TextButton" {
+        Name = "Maximize",
+        Size = UDim2.new(0, 12, 0, 12),
+        Position = UDim2.new(0, 48, 0, 0),
+        BackgroundColor3 = Library.Theme.WindowButtons.Maximize,
+        Text = "",
+        Parent = ButtonHolder
+    }
+    
+    Create "UICorner" {
+        CornerRadius = UDim.new(1, 0),
+        Parent = MaximizeButton
+    }
+    
+    -- Title text
     local TitleText = Create "TextLabel" {
         Name = "Title",
-        Size = UDim2.new(0, 150, 1, 0),
-        Position = UDim2.new(0, 55, 0, 0),
+        Size = UDim2.new(1, -140, 1, 0),
+        Position = UDim2.new(0.5, 0, 0, 0),
+        AnchorPoint = Vector2.new(0.5, 0),
         BackgroundTransparency = 1,
         Text = title,
         TextColor3 = Library.Theme.Text,
-        TextSize = 18,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = TitleContainer
+        TextSize = 13,
+        Font = Enum.Font.SourceSansBold,
+        Parent = TitleBar
     }
     
-    -- Navigation bar
-    local NavBar = Create "Frame" {
-        Name = "NavBar",
-        Size = UDim2.new(1, -20, 0, 35),
-        Position = UDim2.new(0, 10, 0, 60),
+    -- Sidebar
+    local Sidebar = Create "Frame" {
+        Name = "Sidebar",
+        Size = UDim2.new(0, 150, 1, -30),
+        Position = UDim2.new(0, 0, 0, 30),
         BackgroundColor3 = Library.Theme.Secondary,
         BorderSizePixel = 0,
         Parent = MainFrame
     }
     
-    Create "UICorner" {
-        CornerRadius = UDim.new(0, 8),
-        Parent = NavBar
-    }
-    
-    local TabButtons = Create "Frame" {
-        Name = "TabButtons",
-        Size = UDim2.new(1, -20, 1, -10),
-        Position = UDim2.new(0, 10, 0, 5),
+    -- Tab container
+    local TabContainer = Create "ScrollingFrame" {
+        Name = "TabContainer",
+        Size = UDim2.new(1, -20, 1, -20),
+        Position = UDim2.new(0, 10, 0, 10),
         BackgroundTransparency = 1,
-        Parent = NavBar
+        ScrollBarThickness = 0,
+        ScrollingEnabled = true,
+        Parent = Sidebar
     }
     
-    local TabButtonLayout = Create "UIListLayout" {
-        FillDirection = Enum.FillDirection.Horizontal,
-        HorizontalAlignment = Enum.HorizontalAlignment.Left,
-        SortOrder = Enum.SortOrder.LayoutOrder,
+    local TabListLayout = Create "UIListLayout" {
         Padding = UDim.new(0, 5),
-        Parent = TabButtons
+        Parent = TabContainer
     }
     
-    -- Content container
-    local ContentContainer = Create "Frame" {
-        Name = "ContentContainer",
-        Size = UDim2.new(1, -20, 1, -105),
-        Position = UDim2.new(0, 10, 0, 105),
+    -- Content area
+    local ContentArea = Create "Frame" {
+        Name = "ContentArea",
+        Size = UDim2.new(1, -170, 1, -50),
+        Position = UDim2.new(0, 160, 0, 40),
         BackgroundColor3 = Library.Theme.Secondary,
         BorderSizePixel = 0,
         Parent = MainFrame
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 8),
-        Parent = ContentContainer
+        CornerRadius = UDim.new(0, 10),
+        Parent = ContentArea
     }
-    
+
     -- Make window draggable with smooth dragging
     local dragging, dragInput, dragStart, startPos
     
-    TopBar.InputBegan:Connect(function(input)
+    TitleBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
@@ -275,7 +301,7 @@ function Library:CreateWindow(title)
             TextColor3 = Library.Theme.TextDark,
             TextSize = 14,
             Font = Enum.Font.GothamMedium,
-            Parent = TabButtons
+            Parent = TabContainer
         }
         
         local TabButtonHighlight = Create "Frame" {
@@ -297,7 +323,7 @@ function Library:CreateWindow(title)
             ScrollBarThickness = 2,
             ScrollBarImageColor3 = Library.Theme.Accent,
             Visible = false,
-            Parent = ContentContainer
+            Parent = ContentArea
         }
         
         local ContainerLayout = Create "UIListLayout" {
@@ -306,14 +332,14 @@ function Library:CreateWindow(title)
         }
         
         TabButton.MouseButton1Click:Connect(function()
-            for _, v in pairs(ContentContainer:GetChildren()) do
+            for _, v in pairs(ContentArea:GetChildren()) do
                 if v:IsA("ScrollingFrame") then
                     v.Visible = false
                 end
             end
             TabContainer.Visible = true
             
-            for _, v in pairs(TabButtons:GetChildren()) do
+            for _, v in pairs(TabContainer:GetChildren()) do
                 if v:IsA("TextButton") then
                     TweenService:Create(v, TweenInfo.new(0.2), {
                         TextColor3 = Library.Theme.TextDark

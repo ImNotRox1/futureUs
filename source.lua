@@ -305,6 +305,10 @@ function Library:CreateWindow(title)
             Parent = TabContainer
         }
         
+        ContainerLayout:GetPropertyChangedSignal("AbsoluteContentSize").Connect(function()
+            TabContainer.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y + 10)
+        end)
+        
         TabButton.MouseButton1Click:Connect(function()
             for _, v in pairs(ContentContainer:GetChildren()) do
                 if v:IsA("ScrollingFrame") then
@@ -403,6 +407,67 @@ function Library:CreateWindow(title)
                     Size = UDim2.new(1, 0, 0, 40)
                 }):Play()
             end)
+        end
+        
+        function tab:CreateLabel(text)
+            local Label = Create "Frame" {
+                Name = text,
+                Size = UDim2.new(1, 0, 0, 25),
+                BackgroundColor3 = Library.Theme.InputBackground,
+                BackgroundTransparency = 0.9,
+                Parent = TabContainer
+            }
+            
+            Create "UICorner" {
+                CornerRadius = UDim.new(0, 6),
+                Parent = Label
+            }
+            
+            local LabelText = Create "TextLabel" {
+                Name = "Text",
+                Size = UDim2.new(1, -20, 1, 0),
+                Position = UDim2.new(0, 10, 0, 0),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = Library.Theme.TextDark,
+                TextSize = 13,
+                Font = Enum.Font.GothamMedium,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = Label
+            }
+            
+            local labelObj = {}
+            
+            function labelObj:SetText(newText)
+                LabelText.Text = newText
+            end
+            
+            function labelObj:SetColor(color)
+                TweenService:Create(LabelText, TweenInfo.new(0.2), {
+                    TextColor3 = color
+                }):Play()
+            end
+            
+            -- Add hover effect
+            Label.MouseEnter:Connect(function()
+                TweenService:Create(Label, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 0.8
+                }):Play()
+                TweenService:Create(LabelText, TweenInfo.new(0.2), {
+                    TextColor3 = Library.Theme.Text
+                }):Play()
+            end)
+            
+            Label.MouseLeave:Connect(function()
+                TweenService:Create(Label, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 0.9
+                }):Play()
+                TweenService:Create(LabelText, TweenInfo.new(0.2), {
+                    TextColor3 = Library.Theme.TextDark
+                }):Play()
+            end)
+            
+            return labelObj
         end
         
         return tab

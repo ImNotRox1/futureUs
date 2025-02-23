@@ -216,6 +216,7 @@ function Library:CreateWindow(title)
         Position = UDim2.new(0, 160, 0, 40),
         BackgroundColor3 = Library.Theme.Secondary,
         BorderSizePixel = 0,
+        ClipsDescendants = true,
         Parent = MainFrame
     }
     
@@ -260,7 +261,7 @@ function Library:CreateWindow(title)
         
         local TabButton = Create "TextButton" {
             Name = name,
-            Size = UDim2.new(0, 100, 1, 0),
+            Size = UDim2.new(1, -20, 0, 32),
             BackgroundColor3 = Library.Theme.InputBackground,
             BackgroundTransparency = 1,
             Text = name,
@@ -268,16 +269,6 @@ function Library:CreateWindow(title)
             TextSize = 14,
             Font = Enum.Font.GothamMedium,
             Parent = TabContainer
-        }
-        
-        local TabButtonHighlight = Create "Frame" {
-            Name = "Highlight",
-            Size = UDim2.new(1, 0, 0, 2),
-            Position = UDim2.new(0, 0, 1, -2),
-            BackgroundColor3 = Library.Theme.Accent,
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            Parent = TabButton
         }
         
         local TabContainer = Create "ScrollingFrame" {
@@ -288,14 +279,25 @@ function Library:CreateWindow(title)
             BorderSizePixel = 0,
             ScrollBarThickness = 2,
             ScrollBarImageColor3 = Library.Theme.Accent,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
             Visible = false,
             Parent = ContentArea
         }
+        
+        if #TabContainer:GetChildren() == 0 then
+            TabContainer.Visible = true
+            TabButton.TextColor3 = Library.Theme.Accent
+        end
         
         local ContainerLayout = Create "UIListLayout" {
             Padding = UDim.new(0, 8),
             Parent = TabContainer
         }
+
+        ContainerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContainer.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y + 10)
+        end)
         
         TabButton.MouseButton1Click:Connect(function()
             for _, v in pairs(ContentArea:GetChildren()) do

@@ -11,12 +11,12 @@ end
 
 -- Theme
 local Theme = {
-    Primary = Color3.fromRGB(30, 30, 35),
-    Secondary = Color3.fromRGB(25, 25, 30),
-    Accent = Color3.fromRGB(85, 100, 240),
-    Text = Color3.fromRGB(240, 240, 240),
-    TextDark = Color3.fromRGB(160, 160, 160),
-    Background = Color3.fromRGB(20, 20, 25)
+    Background = Color3.fromRGB(0, 0, 0),        -- Pure black background
+    Primary = Color3.fromRGB(10, 10, 10),        -- Nearly black
+    Secondary = Color3.fromRGB(15, 15, 15),      -- Very dark gray for hover
+    Text = Color3.fromRGB(255, 255, 255),        -- Pure white text
+    TextDark = Color3.fromRGB(120, 120, 120),    -- Darker gray text
+    Accent = Color3.fromRGB(255, 255, 255)       -- White accent
 }
 
 local Library = {}
@@ -32,54 +32,58 @@ function Library:CreateWindow(title)
     -- Main Frame
     local Main = Instance.new("Frame")
     Main.Name = "Main"
-    Main.Size = UDim2.new(0, 550, 0, 350)
-    Main.Position = UDim2.new(0.5, -275, 0.5, -175)
+    Main.Size = UDim2.new(0, 500, 0, 300)
+    Main.Position = UDim2.new(0.5, -250, 0.5, -150)
     Main.BackgroundColor3 = Theme.Background
     Main.BorderSizePixel = 0
     Main.Parent = ScreenGui
     
     local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 8)
+    MainCorner.CornerRadius = UDim.new(0, 2)  -- Even smaller corners for that sharp look
     MainCorner.Parent = Main
     
     -- Title Bar
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
-    TitleBar.Size = UDim2.new(1, 0, 0, 40)
-    TitleBar.BackgroundColor3 = Theme.Primary
+    TitleBar.Size = UDim2.new(1, 0, 0, 25)    -- Slightly smaller title bar
+    TitleBar.BackgroundColor3 = Theme.Background
     TitleBar.BorderSizePixel = 0
     TitleBar.Parent = Main
     
-    local TitleCorner = Instance.new("UICorner")
-    TitleCorner.CornerRadius = UDim.new(0, 8)
-    TitleCorner.Parent = TitleBar
-    
     local TitleText = Instance.new("TextLabel")
-    TitleText.Size = UDim2.new(1, -20, 1, 0)
-    TitleText.Position = UDim2.new(0, 15, 0, 0)
+    TitleText.Size = UDim2.new(1, -10, 1, 0)
+    TitleText.Position = UDim2.new(0, 10, 0, 0)
     TitleText.BackgroundTransparency = 1
     TitleText.Text = title
     TitleText.TextColor3 = Theme.Text
-    TitleText.TextSize = 15
-    TitleText.Font = Enum.Font.GothamBold
+    TitleText.TextSize = 14
+    TitleText.Font = Enum.Font.Gotham
     TitleText.TextXAlignment = Enum.TextXAlignment.Left
     TitleText.Parent = TitleBar
     
     -- Close Button
     local CloseButton = Instance.new("TextButton")
     CloseButton.Size = UDim2.new(0, 30, 0, 30)
-    CloseButton.Position = UDim2.new(1, -35, 0, 5)
+    CloseButton.Position = UDim2.new(1, -30, 0, 0)
     CloseButton.BackgroundTransparency = 1
     CloseButton.Text = "×"
     CloseButton.TextColor3 = Theme.TextDark
-    CloseButton.TextSize = 20
+    CloseButton.TextSize = 16
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.Parent = TitleBar
+    
+    CloseButton.MouseEnter:Connect(function()
+        CloseButton.TextColor3 = Theme.Text
+    end)
+    
+    CloseButton.MouseLeave:Connect(function()
+        CloseButton.TextColor3 = Theme.TextDark
+    end)
     
     CloseButton.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
     end)
-    
+
     -- Make window draggable
     local Dragging = false
     local DragStart = nil
@@ -110,26 +114,27 @@ function Library:CreateWindow(title)
             Dragging = false
         end
     end)
-    
+
     -- Tab System
-    local TabButtons = Instance.new("Frame")
-    TabButtons.Name = "TabButtons"
-    TabButtons.Size = UDim2.new(0, 40, 1, -50)
-    TabButtons.Position = UDim2.new(0, 10, 0, 45)
-    TabButtons.BackgroundTransparency = 1
-    TabButtons.Parent = Main
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Name = "Tabs"
+    TabContainer.Size = UDim2.new(0, 30, 1, -25)  -- Thinner tab bar
+    TabContainer.Position = UDim2.new(0, 0, 0, 25)
+    TabContainer.BackgroundColor3 = Theme.Primary
+    TabContainer.BorderSizePixel = 0
+    TabContainer.Parent = Main
     
-    local TabButtonList = Instance.new("UIListLayout")
-    TabButtonList.Padding = UDim.new(0, 5)
-    TabButtonList.Parent = TabButtons
+    local TabList = Instance.new("UIListLayout")
+    TabList.Padding = UDim.new(0, 5)
+    TabList.Parent = TabContainer
     
-    local TabPages = Instance.new("Frame")
-    TabPages.Name = "TabPages"
-    TabPages.Size = UDim2.new(1, -60, 1, -50)
-    TabPages.Position = UDim2.new(0, 55, 0, 45)
-    TabPages.BackgroundTransparency = 1
-    TabPages.Parent = Main
-    
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "Content"
+    ContentContainer.Size = UDim2.new(1, -30, 1, -25)
+    ContentContainer.Position = UDim2.new(0, 30, 0, 25)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.Parent = Main
+
     local Tabs = {}
     
     function Window:CreateTab(name)
@@ -140,7 +145,7 @@ function Library:CreateWindow(title)
         TabButton.Size = UDim2.new(1, 0, 0, 40)
         TabButton.BackgroundColor3 = Theme.Primary
         TabButton.BorderSizePixel = 0
-        TabButton.Parent = TabButtons
+        TabButton.Parent = TabContainer
         
         local TabButtonCorner = Instance.new("UICorner")
         TabButtonCorner.CornerRadius = UDim.new(0, 6)
@@ -163,7 +168,7 @@ function Library:CreateWindow(title)
         TabPage.ScrollBarThickness = 2
         TabPage.ScrollBarImageColor3 = Theme.Accent
         TabPage.Visible = false
-        TabPage.Parent = TabPages
+        TabPage.Parent = ContentContainer
         
         local TabPageList = Instance.new("UIListLayout")
         TabPageList.Padding = UDim.new(0, 10)

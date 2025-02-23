@@ -46,36 +46,53 @@ local function CreateStroke(parent)
 end
 
 function Library:CleanupPreviousInstances()
-    -- Cleanup from CoreGui
-    for _, gui in pairs(CoreGui:GetChildren()) do
-        if gui.Name == "ModernUI" then
-            gui:Destroy()
-        end
-    end
-    
-    -- Cleanup from PlayerGui if it exists
-    local player = game:GetService("Players").LocalPlayer
-    if player and player:FindFirstChild("PlayerGui") then
-        for _, gui in pairs(player.PlayerGui:GetChildren()) do
-            if gui.Name == "ModernUI" then
-                gui:Destroy()
+    -- Check all possible GUI locations and destroy previous instances
+    local function cleanFromParent(parent)
+        if parent then
+            -- Destroy any GUI with our name
+            for _, gui in ipairs(parent:GetChildren()) do
+                if gui:IsA("ScreenGui") and gui.Name == "ModernUI" then
+                    pcall(function() 
+                        gui:Destroy()
+                    end)
+                end
             end
         end
     end
+
+    -- Try to clean from all possible locations
+    cleanFromParent(game:GetService("CoreGui"))
+    cleanFromParent(gethui and gethui() or nil)
     
-    -- Clear existing windows table
+    -- Clean from PlayerGui
+    local player = game:GetService("Players").LocalPlayer
+    if player then
+        cleanFromParent(player:FindFirstChild("PlayerGui"))
+    end
+    
+    -- Clean from current syn.protect_gui container if it exists
+    if syn and syn.protect_gui then
+        local protected = syn.protect_gui.container
+        if protected then
+            cleanFromParent(protected)
+        end
+    end
+    
+    -- Clear the windows table
     table.clear(self.Windows)
 end
 
 function Library:CreateWindow(title)
-    -- Cleanup previous instances first
+    -- Force cleanup of previous instances
     self:CleanupPreviousInstances()
+    task.wait(0.1) -- Small delay to ensure cleanup completes
     
     local window = {}
     
     local ScreenGui = Create "ScreenGui" {
         Name = "ModernUI",
-        ResetOnSpawn = false
+        ResetOnSpawn = false,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     }
     
     -- Add unique identifier

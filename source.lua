@@ -305,10 +305,6 @@ function Library:CreateWindow(title)
             Parent = TabContainer
         }
         
-        ContainerLayout:GetPropertyChangedSignal("AbsoluteContentSize").Connect(function()
-            TabContainer.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y + 10)
-        end)
-        
         TabButton.MouseButton1Click:Connect(function()
             for _, v in pairs(ContentContainer:GetChildren()) do
                 if v:IsA("ScrollingFrame") then
@@ -409,65 +405,121 @@ function Library:CreateWindow(title)
             end)
         end
         
-        function tab:CreateLabel(text)
-            local Label = Create "Frame" {
+        function tab:CreateToggle(text, default, callback)
+            callback = callback or function() end
+            default = default or false
+            
+            local Toggle = Create "Frame" {
                 Name = text,
-                Size = UDim2.new(1, 0, 0, 25),
+                Size = UDim2.new(1, 0, 0, 40),
                 BackgroundColor3 = Library.Theme.InputBackground,
-                BackgroundTransparency = 0.9,
+                BorderSizePixel = 0,
                 Parent = TabContainer
             }
             
             Create "UICorner" {
-                CornerRadius = UDim.new(0, 6),
-                Parent = Label
+                CornerRadius = UDim.new(0, 8),
+                Parent = Toggle
             }
             
-            local LabelText = Create "TextLabel" {
-                Name = "Text",
-                Size = UDim2.new(1, -20, 1, 0),
-                Position = UDim2.new(0, 10, 0, 0),
+            local ToggleLabel = Create "TextLabel" {
+                Name = "Label",
+                Size = UDim2.new(1, -70, 1, 0),
+                Position = UDim2.new(0, 15, 0, 0),
                 BackgroundTransparency = 1,
                 Text = text,
-                TextColor3 = Library.Theme.TextDark,
-                TextSize = 13,
+                TextColor3 = Library.Theme.Text,
+                TextSize = 14,
                 Font = Enum.Font.GothamMedium,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = Label
+                Parent = Toggle
             }
             
-            local labelObj = {}
+            local ToggleButton = Create "Frame" {
+                Name = "Button",
+                Size = UDim2.new(0, 40, 0, 20),
+                Position = UDim2.new(1, -55, 0.5, -10),
+                BackgroundColor3 = default and Library.Theme.Accent or Library.Theme.InputBackground,
+                BorderSizePixel = 0,
+                Parent = Toggle
+            }
             
-            function labelObj:SetText(newText)
-                LabelText.Text = newText
+            Create "UICorner" {
+                CornerRadius = UDim.new(1, 0),
+                Parent = ToggleButton
+            }
+            
+            local ToggleCircle = Create "Frame" {
+                Name = "Circle",
+                Size = UDim2.new(0, 16, 0, 16),
+                Position = UDim2.new(0, default and 22 or 2, 0.5, -8),
+                BackgroundColor3 = Library.Theme.Text,
+                BorderSizePixel = 0,
+                Parent = ToggleButton
+            }
+            
+            Create "UICorner" {
+                CornerRadius = UDim.new(1, 0),
+                Parent = ToggleCircle
+            }
+            
+            local toggled = default
+            local debounce = false
+            
+            local function toggle()
+                if debounce then return end
+                debounce = true
+                
+                toggled = not toggled
+                
+                -- Animate the toggle
+                TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+                    BackgroundColor3 = toggled and Library.Theme.Accent or Library.Theme.InputBackground
+                }):Play()
+                
+                TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {
+                    Position = UDim2.new(0, toggled and 22 or 2, 0.5, -8)
+                }):Play()
+                
+                callback(toggled)
+                
+                task.wait(0.2)
+                debounce = false
             end
             
-            function labelObj:SetColor(color)
-                TweenService:Create(LabelText, TweenInfo.new(0.2), {
-                    TextColor3 = color
-                }):Play()
-            end
+            -- Click handlers
+            Toggle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    toggle()
+                end
+            end)
             
-            -- Add hover effect
-            Label.MouseEnter:Connect(function()
-                TweenService:Create(Label, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.8
-                }):Play()
-                TweenService:Create(LabelText, TweenInfo.new(0.2), {
-                    TextColor3 = Library.Theme.Text
+            -- Hover effects
+            Toggle.MouseEnter:Connect(function()
+                TweenService:Create(Toggle, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Library.Theme.Accent
                 }):Play()
             end)
             
-            Label.MouseLeave:Connect(function()
-                TweenService:Create(Label, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.9
-                }):Play()
-                TweenService:Create(LabelText, TweenInfo.new(0.2), {
-                    TextColor3 = Library.Theme.TextDark
+            Toggle.MouseLeave:Connect(function()
+                TweenService:Create(Toggle, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Library.Theme.InputBackground
                 }):Play()
             end)
             
-            return labelObj
+            local toggleFuncs = {}
+            
+            function toggleFuncs:Set(value)
+                if toggled ~= value then
+                    toggle()
+                end
+            end
+            
+            function toggleFuncs:Get()
+                return toggled
+            end
+            
+            return toggleFuncs
         end
         
         return tab

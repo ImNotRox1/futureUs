@@ -3,22 +3,18 @@ local UserInputService = game:GetService("UserInputService")
 
 local Library = {
     Theme = {
-        Primary = Color3.fromRGB(20, 20, 30),
-        Secondary = Color3.fromRGB(30, 30, 45),
-        Accent = Color3.fromRGB(100, 190, 255),
-        AccentDark = Color3.fromRGB(70, 130, 180),
+        Background = Color3.fromRGB(17, 17, 17),
+        Accent = Color3.fromRGB(65, 65, 65),
+        Secondary = Color3.fromRGB(25, 25, 25),
         Text = Color3.fromRGB(240, 240, 240),
-        TextDark = Color3.fromRGB(160, 160, 160),
-        Background = Color3.fromRGB(15, 15, 20),
-        DarkContrast = Color3.fromRGB(12, 12, 18),
-        Glow = Color3.fromRGB(100, 190, 255)
+        TextDark = Color3.fromRGB(150, 150, 150),
+        Glow = Color3.fromRGB(65, 65, 65)
     },
     Flags = {},
     ToggleKey = Enum.KeyCode.RightShift,
-    Windows = {} -- Add this to track all windows
+    Windows = {}
 }
 
--- Utility Functions
 local function Create(instanceType)
     return function(properties)
         local instance = Instance.new(instanceType)
@@ -29,58 +25,14 @@ local function Create(instanceType)
     end
 end
 
-local function AddRippleEffect(button)
-    local ripple = Create "Frame" {
-        Name = "Ripple",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 0.8,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 0, 0, 0),
-        Parent = button
-    }
-    
-    Create "UICorner" {
-        CornerRadius = UDim.new(1, 0),
-        Parent = ripple
-    }
-    
-    local targetSize = UDim2.new(1.5, 0, 1.5, 0)
-    local fadeTime = 0.5
-    
-    TweenService:Create(ripple, TweenInfo.new(fadeTime), {
-        Size = targetSize,
-        BackgroundTransparency = 1
-    }):Play()
-    
-    game:GetService("Debris"):AddItem(ripple, fadeTime)
-end
-
-local function AddGlow(button)
-    local glow = Create "ImageLabel" {
-        Name = "Glow",
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://7603818383",
-        ImageColor3 = Library.Theme.Glow,
-        ImageTransparency = 0.8,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(1, 25, 1, 25),
-        Parent = button
-    }
-    return glow
-end
-
 function Library:CreateWindow(title)
     local window = {}
     
-    -- Main GUI
     local ScreenGui = Create "ScreenGui" {
         Name = "ModernUI",
         ResetOnSpawn = false
     }
     
-    -- Handle different environments
     if syn then
         syn.protect_gui(ScreenGui)
         ScreenGui.Parent = game.CoreGui
@@ -92,118 +44,70 @@ function Library:CreateWindow(title)
     
     local MainFrame = Create "Frame" {
         Name = "MainFrame",
-        Size = UDim2.new(0, 600, 0, 400),
-        Position = UDim2.new(0.5, -300, 0.5, -200),
+        Size = UDim2.new(0, 300, 0, 350),
+        Position = UDim2.new(0.5, -150, 0.5, -175),
         BackgroundColor3 = Library.Theme.Background,
         BorderSizePixel = 0,
-        Parent = ScreenGui,
-        Visible = true
-    }
-    
-    -- Add shadow
-    local Shadow = Create "ImageLabel" {
-        Name = "Shadow",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(1, 47, 1, 47),
-        ZIndex = 0,
-        Image = "rbxassetid://6015897843",
-        ImageColor3 = Color3.new(0, 0, 0),
-        ImageTransparency = 0.5,
-        Parent = MainFrame
+        Parent = ScreenGui
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 8),
+        CornerRadius = UDim.new(0, 6),
         Parent = MainFrame
     }
     
-    -- Top bar with new modern design
-    local TopBar = Create "Frame" {
-        Name = "TopBar",
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = Library.Theme.DarkContrast,
+    -- Search bar at top
+    local SearchBar = Create "Frame" {
+        Name = "SearchBar",
+        Size = UDim2.new(1, -20, 0, 35),
+        Position = UDim2.new(0, 10, 0, 10),
+        BackgroundColor3 = Library.Theme.Secondary,
         BorderSizePixel = 0,
         Parent = MainFrame
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 8),
-        Parent = TopBar
+        CornerRadius = UDim.new(0, 6),
+        Parent = SearchBar
     }
     
-    -- Title with icon
-    local TitleContainer = Create "Frame" {
-        Name = "TitleContainer",
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
+    local SearchIcon = Create "ImageLabel" {
+        Name = "SearchIcon",
+        Size = UDim2.new(0, 16, 0, 16),
+        Position = UDim2.new(0, 10, 0.5, -8),
         BackgroundTransparency = 1,
-        Parent = TopBar
-    }
-    
-    local TitleIcon = Create "ImageLabel" {
-        Name = "Icon",
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(0, 0, 0.5, -10),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://8997386536",
-        ImageColor3 = Library.Theme.Accent,
-        Parent = TitleContainer
-    }
-    
-    local TitleText = Create "TextLabel" {
-        Name = "Title",
-        Text = title,
-        Size = UDim2.new(1, -30, 1, 0),
-        Position = UDim2.new(0, 30, 0, 0),
-        BackgroundTransparency = 1,
-        TextColor3 = Library.Theme.Text,
-        TextSize = 16,
-        Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = TitleContainer
-    }
-    
-    -- Close button
-    local CloseButton = Create "ImageButton" {
-        Name = "CloseButton",
-        Size = UDim2.new(0, 24, 0, 24),
-        Position = UDim2.new(1, -32, 0, 8),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://8997387827",
+        Image = "rbxassetid://8150715986",
         ImageColor3 = Library.Theme.TextDark,
-        Parent = TopBar
+        Parent = SearchBar
     }
     
-    CloseButton.MouseEnter:Connect(function()
-        TweenService:Create(CloseButton, TweenInfo.new(0.2), {
-            ImageColor3 = Library.Theme.Accent
-        }):Play()
-    end)
+    local SearchBox = Create "TextBox" {
+        Name = "SearchBox",
+        Size = UDim2.new(1, -40, 1, 0),
+        Position = UDim2.new(0, 35, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        PlaceholderText = "Search...",
+        TextColor3 = Library.Theme.Text,
+        PlaceholderColor3 = Library.Theme.TextDark,
+        TextSize = 14,
+        Font = Enum.Font.Gotham,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = SearchBar
+    }
     
-    CloseButton.MouseLeave:Connect(function()
-        TweenService:Create(CloseButton, TweenInfo.new(0.2), {
-            ImageColor3 = Library.Theme.TextDark
-        }):Play()
-    end)
-    
-    CloseButton.MouseButton1Click:Connect(function()
-        window:Destroy()
-    end)
-    
-    -- Container for tabs
+    -- Tab Container
     local TabContainer = Create "Frame" {
         Name = "TabContainer",
-        Size = UDim2.new(0, 150, 1, -50),
-        Position = UDim2.new(0, 10, 0, 45),
-        BackgroundColor3 = Library.Theme.Primary,
+        Size = UDim2.new(1, -20, 1, -60),
+        Position = UDim2.new(0, 10, 0, 55),
+        BackgroundColor3 = Library.Theme.Secondary,
         BorderSizePixel = 0,
         Parent = MainFrame
     }
     
     Create "UICorner" {
-        CornerRadius = UDim.new(0, 8),
+        CornerRadius = UDim.new(0, 6),
         Parent = TabContainer
     }
     
@@ -213,8 +117,7 @@ function Library:CreateWindow(title)
         Position = UDim2.new(0, 5, 0, 5),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        ScrollBarThickness = 2,
-        ScrollBarImageColor3 = Library.Theme.Accent,
+        ScrollBarThickness = 0,
         Parent = TabContainer
     }
     
@@ -223,48 +126,19 @@ function Library:CreateWindow(title)
         Parent = TabList
     }
     
-    -- Content container
-    local ContentContainer = Create "Frame" {
-        Name = "ContentContainer",
-        Size = UDim2.new(1, -180, 1, -50),
-        Position = UDim2.new(0, 170, 0, 45),
-        BackgroundTransparency = 1,
-        Parent = MainFrame
-    }
-    
-    -- Toggle UI with key
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Library.ToggleKey then
-            MainFrame.Visible = not MainFrame.Visible
-        end
-    end)
-    
-    -- Make window draggable with smooth dragging
+    -- Make window draggable
     local dragging, dragInput, dragStart, startPos
     
-    TopBar.InputBegan:Connect(function(input)
+    MainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = MainFrame.Position
-            
-            local inputChanged = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-            table.insert(window.Connections, inputChanged)
         end
     end)
     
     UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             TweenService:Create(MainFrame, TweenInfo.new(0.1), {
                 Position = UDim2.new(
@@ -277,64 +151,48 @@ function Library:CreateWindow(title)
         end
     end)
     
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
     function window:CreateTab(name)
         local tab = {}
         
-        -- Tab button
         local TabButton = Create "TextButton" {
             Name = name,
             Size = UDim2.new(1, 0, 0, 35),
-            BackgroundColor3 = Library.Theme.Secondary,
+            BackgroundColor3 = Library.Theme.Background,
             BorderSizePixel = 0,
             Text = name,
             TextColor3 = Library.Theme.TextDark,
             TextSize = 14,
-            Font = Enum.Font.GothamMedium,
+            Font = Enum.Font.Gotham,
             Parent = TabList
         }
         
         Create "UICorner" {
-            CornerRadius = UDim.new(0, 6),
+            CornerRadius = UDim.new(0, 4),
             Parent = TabButton
         }
         
-        -- Tab content
-        local TabContent = Create "ScrollingFrame" {
+        local TabContent = Create "Frame" {
             Name = name.."Content",
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ScrollBarThickness = 2,
-            ScrollBarImageColor3 = Library.Theme.Accent,
             Visible = false,
-            Parent = ContentContainer
+            Parent = TabContainer
         }
         
-        local ContentLayout = Create "UIListLayout" {
-            Padding = UDim.new(0, 10),
+        local ContentList = Create "UIListLayout" {
+            Padding = UDim.new(0, 5),
             Parent = TabContent
         }
         
-        -- Tab button effects
-        TabButton.MouseEnter:Connect(function()
-            TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                BackgroundColor3 = Library.Theme.Accent,
-                TextColor3 = Library.Theme.Text
-            }):Play()
-        end)
-        
-        TabButton.MouseLeave:Connect(function()
-            if TabContent.Visible == false then
-                TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Library.Theme.Secondary,
-                    TextColor3 = Library.Theme.TextDark
-                }):Play()
-            end
-        end)
-        
         TabButton.MouseButton1Click:Connect(function()
-            for _, v in pairs(ContentContainer:GetChildren()) do
-                if v:IsA("ScrollingFrame") then
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("Frame") and v.Name:find("Content") then
                     v.Visible = false
                 end
             end
@@ -343,7 +201,7 @@ function Library:CreateWindow(title)
             for _, v in pairs(TabList:GetChildren()) do
                 if v:IsA("TextButton") then
                     TweenService:Create(v, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Library.Theme.Secondary,
+                        BackgroundColor3 = Library.Theme.Background,
                         TextColor3 = Library.Theme.TextDark
                     }):Play()
                 end
@@ -355,28 +213,27 @@ function Library:CreateWindow(title)
             }):Play()
         end)
         
-        -- Create elements in tab
         function tab:CreateButton(text, callback)
             callback = callback or function() end
             
             local Button = Create "TextButton" {
                 Name = text,
-                Size = UDim2.new(1, 0, 0, 35),
-                BackgroundColor3 = Library.Theme.Secondary,
+                Size = UDim2.new(1, -10, 0, 32),
+                Position = UDim2.new(0, 5, 0, 0),
+                BackgroundColor3 = Library.Theme.Background,
                 BorderSizePixel = 0,
                 Text = text,
                 TextColor3 = Library.Theme.Text,
                 TextSize = 14,
-                Font = Enum.Font.GothamMedium,
+                Font = Enum.Font.Gotham,
                 Parent = TabContent
             }
             
             Create "UICorner" {
-                CornerRadius = UDim.new(0, 6),
+                CornerRadius = UDim.new(0, 4),
                 Parent = Button
             }
             
-            -- Button effects
             Button.MouseEnter:Connect(function()
                 TweenService:Create(Button, TweenInfo.new(0.2), {
                     BackgroundColor3 = Library.Theme.Accent
@@ -385,22 +242,18 @@ function Library:CreateWindow(title)
             
             Button.MouseLeave:Connect(function()
                 TweenService:Create(Button, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Library.Theme.Secondary
+                    BackgroundColor3 = Library.Theme.Background
                 }):Play()
             end)
             
             Button.MouseButton1Click:Connect(function()
                 callback()
-                
-                -- Click effect
                 TweenService:Create(Button, TweenInfo.new(0.1), {
-                    Size = UDim2.new(1, 0, 0, 32)
+                    Size = UDim2.new(1, -10, 0, 30)
                 }):Play()
-                
                 wait(0.1)
-                
                 TweenService:Create(Button, TweenInfo.new(0.1), {
-                    Size = UDim2.new(1, 0, 0, 35)
+                    Size = UDim2.new(1, -10, 0, 32)
                 }):Play()
             end)
         end
@@ -408,40 +261,20 @@ function Library:CreateWindow(title)
         return tab
     end
     
-    -- Add destroy function
     function window:Destroy()
-        -- Remove all connections
-        for _, connection in pairs(window.Connections or {}) do
-            connection:Disconnect()
-        end
-        
-        -- Destroy the ScreenGui with a fade out animation
-        TweenService:Create(MainFrame, TweenInfo.new(0.2), {
-            BackgroundTransparency = 1
-        }):Play()
-        
-        -- Remove from Library.Windows
+        ScreenGui:Destroy()
         for i, w in pairs(Library.Windows) do
             if w == window then
                 table.remove(Library.Windows, i)
                 break
             end
         end
-        
-        task.wait(0.2)
-        ScreenGui:Destroy()
     end
     
-    -- Store connections for cleanup
-    window.Connections = {}
-    
-    -- Add window to Library.Windows
     table.insert(Library.Windows, window)
-    
     return window
 end
 
--- Add global destroy function
 function Library:DestroyAll()
     for _, window in pairs(self.Windows) do
         window:Destroy()

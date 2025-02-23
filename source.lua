@@ -1,5 +1,6 @@
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
 local Library = {
     Theme = {
@@ -14,7 +15,8 @@ local Library = {
     },
     Flags = {},
     ToggleKey = Enum.KeyCode.RightShift,
-    Windows = {}
+    Windows = {},
+    UniqueId = "ModernUI_" .. game:GetService("HttpService"):GenerateGUID(false)
 }
 
 local function Create(instanceType)
@@ -43,12 +45,44 @@ local function CreateStroke(parent)
     }
 end
 
+function Library:CleanupPreviousInstances()
+    -- Cleanup from CoreGui
+    for _, gui in pairs(CoreGui:GetChildren()) do
+        if gui.Name == "ModernUI" then
+            gui:Destroy()
+        end
+    end
+    
+    -- Cleanup from PlayerGui if it exists
+    local player = game:GetService("Players").LocalPlayer
+    if player and player:FindFirstChild("PlayerGui") then
+        for _, gui in pairs(player.PlayerGui:GetChildren()) do
+            if gui.Name == "ModernUI" then
+                gui:Destroy()
+            end
+        end
+    end
+    
+    -- Clear existing windows table
+    table.clear(self.Windows)
+end
+
 function Library:CreateWindow(title)
+    -- Cleanup previous instances first
+    self:CleanupPreviousInstances()
+    
     local window = {}
     
     local ScreenGui = Create "ScreenGui" {
         Name = "ModernUI",
         ResetOnSpawn = false
+    }
+    
+    -- Add unique identifier
+    local Identifier = Create "StringValue" {
+        Name = "Identifier",
+        Value = self.UniqueId,
+        Parent = ScreenGui
     }
     
     if syn then

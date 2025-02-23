@@ -13,7 +13,10 @@ local Library = {
 }
 
 function Library:CreateWindow(title)
-    local window = {}
+    local window = {
+        Tabs = {},
+        CurrentTab = nil
+    }
     
     -- Cleanup previous UI
     for _, gui in pairs(CoreGui:GetChildren()) do
@@ -42,8 +45,8 @@ function Library:CreateWindow(title)
     -- Main Frame
     local Main = Instance.new("Frame")
     Main.Name = "Main"
-    Main.Size = UDim2.new(0, 400, 0, 300)
-    Main.Position = UDim2.new(0.5, -200, 0.5, -150)
+    Main.Size = UDim2.new(0, 450, 0, 300)  -- Made slightly wider for tabs
+    Main.Position = UDim2.new(0.5, -225, 0.5, -150)
     Main.BackgroundColor3 = Library.Theme.Background
     Main.BorderSizePixel = 0
     Main.Parent = ScreenGui
@@ -78,18 +81,224 @@ function Library:CreateWindow(title)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = TopBar
     
-    -- Content Area
-    local Content = Instance.new("Frame")
-    Content.Name = "Content"
-    Content.Size = UDim2.new(1, -20, 1, -42)
-    Content.Position = UDim2.new(0, 10, 0, 37)
-    Content.BackgroundTransparency = 1
-    Content.Parent = Main
+    -- Tab Bar
+    local TabBar = Instance.new("Frame")
+    TabBar.Name = "TabBar"
+    TabBar.Size = UDim2.new(0, 130, 1, -32)
+    TabBar.Position = UDim2.new(0, 0, 0, 32)
+    TabBar.BackgroundColor3 = Library.Theme.Secondary
+    TabBar.BorderSizePixel = 0
+    TabBar.Parent = Main
     
-    -- Element List
-    local ElementList = Instance.new("UIListLayout")
-    ElementList.Padding = UDim.new(0, 5)
-    ElementList.Parent = Content
+    local TabContainer = Instance.new("ScrollingFrame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(1, -10, 1, -10)
+    TabContainer.Position = UDim2.new(0, 5, 0, 5)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.ScrollBarThickness = 2
+    TabContainer.ScrollBarImageColor3 = Library.Theme.Accent
+    TabContainer.Parent = TabBar
+    
+    local TabList = Instance.new("UIListLayout")
+    TabList.Padding = UDim.new(0, 5)
+    TabList.Parent = TabContainer
+    
+    -- Content Area
+    local ContentArea = Instance.new("Frame")
+    ContentArea.Name = "ContentArea"
+    ContentArea.Size = UDim2.new(1, -140, 1, -42)
+    ContentArea.Position = UDim2.new(0, 135, 0, 37)
+    ContentArea.BackgroundColor3 = Library.Theme.Secondary
+    ContentArea.BorderSizePixel = 0
+    ContentArea.Parent = Main
+    
+    local ContentCorner = Instance.new("UICorner")
+    ContentCorner.CornerRadius = UDim.new(0, 6)
+    ContentCorner.Parent = ContentArea
+    
+    -- Create Tab function
+    function window:CreateTab(name)
+        local tab = {
+            Elements = {}
+        }
+        
+        -- Tab Button
+        local TabButton = Instance.new("TextButton")
+        TabButton.Size = UDim2.new(1, -10, 0, 32)
+        TabButton.BackgroundColor3 = Library.Theme.Background
+        TabButton.BackgroundTransparency = 0.9
+        TabButton.BorderSizePixel = 0
+        TabButton.Text = name
+        TabButton.TextColor3 = Library.Theme.DarkText
+        TabButton.TextSize = 14
+        TabButton.Font = Enum.Font.Gotham
+        TabButton.Parent = TabContainer
+        
+        local TabButtonCorner = Instance.new("UICorner")
+        TabButtonCorner.CornerRadius = UDim.new(0, 4)
+        TabButtonCorner.Parent = TabButton
+        
+        -- Tab Content
+        local TabContent = Instance.new("ScrollingFrame")
+        TabContent.Size = UDim2.new(1, -20, 1, -20)
+        TabContent.Position = UDim2.new(0, 10, 0, 10)
+        TabContent.BackgroundTransparency = 1
+        TabContent.ScrollBarThickness = 2
+        TabContent.ScrollBarImageColor3 = Library.Theme.Accent
+        TabContent.Visible = false
+        TabContent.Parent = ContentArea
+        
+        local ElementList = Instance.new("UIListLayout")
+        ElementList.Padding = UDim.new(0, 5)
+        ElementList.Parent = TabContent
+        
+        -- Update canvas size when elements are added
+        ElementList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, 0, 0, ElementList.AbsoluteContentSize.Y + 10)
+        end)
+        
+        -- Tab Button Click Handler
+        TabButton.MouseButton1Click:Connect(function()
+            -- Hide all other tabs
+            for _, otherTab in pairs(window.Tabs) do
+                otherTab.Content.Visible = false
+                otherTab.Button.BackgroundTransparency = 0.9
+                otherTab.Button.TextColor3 = Library.Theme.DarkText
+            end
+            
+            -- Show current tab
+            TabContent.Visible = true
+            TabButton.BackgroundTransparency = 0
+            TabButton.TextColor3 = Library.Theme.Text
+            window.CurrentTab = tab
+        end)
+        
+        -- Store tab data
+        tab.Button = TabButton
+        tab.Content = TabContent
+        table.insert(window.Tabs, tab)
+        
+        -- Show first tab by default
+        if #window.Tabs == 1 then
+            TabContent.Visible = true
+            TabButton.BackgroundTransparency = 0
+            TabButton.TextColor3 = Library.Theme.Text
+            window.CurrentTab = tab
+        end
+        
+        -- Element Creators
+        function tab:CreateButton(text, callback)
+            callback = callback or function() end
+            
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1, 0, 0, 32)
+            Button.BackgroundColor3 = Library.Theme.Secondary
+            Button.BorderSizePixel = 0
+            Button.Text = text
+            Button.TextColor3 = Library.Theme.Text
+            Button.TextSize = 14
+            Button.Font = Enum.Font.Gotham
+            Button.Parent = TabContent
+            
+            local ButtonCorner = Instance.new("UICorner")
+            ButtonCorner.CornerRadius = UDim.new(0, 4)
+            ButtonCorner.Parent = Button
+            
+            Button.MouseEnter:Connect(function()
+                TweenService:Create(Button, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Library.Theme.Accent
+                }):Play()
+            end)
+            
+            Button.MouseLeave:Connect(function()
+                TweenService:Create(Button, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Library.Theme.Secondary
+                }):Play()
+            end)
+            
+            Button.MouseButton1Click:Connect(callback)
+            return Button
+        end
+        
+        function tab:CreateToggle(text, callback)
+            callback = callback or function() end
+            local enabled = false
+            
+            local Toggle = Instance.new("Frame")
+            Toggle.Size = UDim2.new(1, 0, 0, 32)
+            Toggle.BackgroundColor3 = Library.Theme.Secondary
+            Toggle.BorderSizePixel = 0
+            Toggle.Parent = TabContent
+            
+            local ToggleCorner = Instance.new("UICorner")
+            ToggleCorner.CornerRadius = UDim.new(0, 4)
+            ToggleCorner.Parent = Toggle
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -50, 1, 0)
+            Label.Position = UDim2.new(0, 10, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Library.Theme.Text
+            Label.TextSize = 14
+            Label.Font = Enum.Font.Gotham
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = Toggle
+            
+            local Switch = Instance.new("Frame")
+            Switch.Size = UDim2.new(0, 40, 0, 20)
+            Switch.Position = UDim2.new(1, -45, 0.5, -10)
+            Switch.BackgroundColor3 = Library.Theme.Background
+            Switch.BorderSizePixel = 0
+            Switch.Parent = Toggle
+            
+            local SwitchCorner = Instance.new("UICorner")
+            SwitchCorner.CornerRadius = UDim.new(1, 0)
+            SwitchCorner.Parent = Switch
+            
+            local Indicator = Instance.new("Frame")
+            Indicator.Size = UDim2.new(0, 16, 0, 16)
+            Indicator.Position = UDim2.new(0, 2, 0.5, -8)
+            Indicator.BackgroundColor3 = Library.Theme.Text
+            Indicator.BorderSizePixel = 0
+            Indicator.Parent = Switch
+            
+            local IndicatorCorner = Instance.new("UICorner")
+            IndicatorCorner.CornerRadius = UDim.new(1, 0)
+            IndicatorCorner.Parent = Indicator
+            
+            local function updateToggle()
+                TweenService:Create(Switch, TweenInfo.new(0.2), {
+                    BackgroundColor3 = enabled and Library.Theme.Accent or Library.Theme.Background
+                }):Play()
+                
+                TweenService:Create(Indicator, TweenInfo.new(0.2), {
+                    Position = enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+                }):Play()
+                
+                callback(enabled)
+            end
+            
+            Toggle.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    enabled = not enabled
+                    updateToggle()
+                end
+            end)
+            
+            return {
+                Set = function(state)
+                    enabled = state
+                    updateToggle()
+                end,
+                Get = function()
+                    return enabled
+                end
+            }
+        end
+        
+        return tab
+    end
     
     -- Make window draggable
     local dragging = false
@@ -120,118 +329,6 @@ function Library:CreateWindow(title)
             dragging = false
         end
     end)
-    
-    -- Button Creator
-    function window:CreateButton(text, callback)
-        callback = callback or function() end
-        
-        local Button = Instance.new("TextButton")
-        Button.Size = UDim2.new(1, 0, 0, 32)
-        Button.BackgroundColor3 = Library.Theme.Secondary
-        Button.BorderSizePixel = 0
-        Button.Text = text
-        Button.TextColor3 = Library.Theme.Text
-        Button.TextSize = 14
-        Button.Font = Enum.Font.Gotham
-        Button.Parent = Content
-        
-        local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 4)
-        ButtonCorner.Parent = Button
-        
-        Button.MouseEnter:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundColor3 = Library.Theme.Accent
-            }):Play()
-        end)
-        
-        Button.MouseLeave:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundColor3 = Library.Theme.Secondary
-            }):Play()
-        end)
-        
-        Button.MouseButton1Click:Connect(callback)
-        return Button
-    end
-    
-    -- Toggle Creator
-    function window:CreateToggle(text, callback)
-        callback = callback or function() end
-        local enabled = false
-        
-        local Toggle = Instance.new("Frame")
-        Toggle.Size = UDim2.new(1, 0, 0, 32)
-        Toggle.BackgroundColor3 = Library.Theme.Secondary
-        Toggle.BorderSizePixel = 0
-        Toggle.Parent = Content
-        
-        local ToggleCorner = Instance.new("UICorner")
-        ToggleCorner.CornerRadius = UDim.new(0, 4)
-        ToggleCorner.Parent = Toggle
-        
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(1, -50, 1, 0)
-        Label.Position = UDim2.new(0, 10, 0, 0)
-        Label.BackgroundTransparency = 1
-        Label.Text = text
-        Label.TextColor3 = Library.Theme.Text
-        Label.TextSize = 14
-        Label.Font = Enum.Font.Gotham
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Parent = Toggle
-        
-        local Switch = Instance.new("Frame")
-        Switch.Size = UDim2.new(0, 40, 0, 20)
-        Switch.Position = UDim2.new(1, -45, 0.5, -10)
-        Switch.BackgroundColor3 = Library.Theme.Background
-        Switch.BorderSizePixel = 0
-        Switch.Parent = Toggle
-        
-        local SwitchCorner = Instance.new("UICorner")
-        SwitchCorner.CornerRadius = UDim.new(1, 0)
-        SwitchCorner.Parent = Switch
-        
-        local Indicator = Instance.new("Frame")
-        Indicator.Size = UDim2.new(0, 16, 0, 16)
-        Indicator.Position = UDim2.new(0, 2, 0.5, -8)
-        Indicator.BackgroundColor3 = Library.Theme.Text
-        Indicator.BorderSizePixel = 0
-        Indicator.Parent = Switch
-        
-        local IndicatorCorner = Instance.new("UICorner")
-        IndicatorCorner.CornerRadius = UDim.new(1, 0)
-        IndicatorCorner.Parent = Indicator
-        
-        local function updateToggle()
-            TweenService:Create(Switch, TweenInfo.new(0.2), {
-                BackgroundColor3 = enabled and Library.Theme.Accent or Library.Theme.Background
-            }):Play()
-            
-            TweenService:Create(Indicator, TweenInfo.new(0.2), {
-                Position = enabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-            }):Play()
-            
-            callback(enabled)
-        end
-        
-        Toggle.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                enabled = not enabled
-                updateToggle()
-            end
-        end)
-        
-        return {
-            Set = function(state)
-                enabled = state
-                updateToggle()
-            end,
-            Get = function()
-                return enabled
-            end
-        }
-    end
     
     return window
 end

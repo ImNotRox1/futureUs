@@ -9,14 +9,6 @@ local Library = {
         Accent = Color3.fromRGB(100, 100, 255),
         Text = Color3.fromRGB(235, 235, 235),
         DarkText = Color3.fromRGB(175, 175, 175)
-    },
-    Toggled = true,
-    LastPosition = nil,
-    Animation = {
-        SpringDuration = 0.5,
-        EaseInOutBack = Enum.EasingStyle.Back,
-        EaseOutQuart = Enum.EasingStyle.Quart,
-        EaseInOutQuad = Enum.EasingStyle.Quad
     }
 }
 
@@ -151,94 +143,6 @@ function Library:CreateWindow(title)
     CloseButtonCorner.CornerRadius = UDim.new(0, 4)
     CloseButtonCorner.Parent = CloseButton
     
-    -- Minimize Button
-    local MinimizeButton = Instance.new("TextButton")
-    MinimizeButton.Name = "MinimizeButton"
-    MinimizeButton.Size = UDim2.new(0, 24, 0, 24)
-    MinimizeButton.Position = UDim2.new(1, -60, 0.5, -12)
-    MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 185, 0)
-    MinimizeButton.BackgroundTransparency = 1
-    MinimizeButton.Text = "−"
-    MinimizeButton.TextColor3 = Library.Theme.Text
-    MinimizeButton.TextSize = 20
-    MinimizeButton.Font = Enum.Font.GothamBold
-    MinimizeButton.Parent = TopBar
-    
-    local MinimizeButtonCorner = Instance.new("UICorner")
-    MinimizeButtonCorner.CornerRadius = UDim.new(0, 4)
-    MinimizeButtonCorner.Parent = MinimizeButton
-    
-    -- Minimize button hover effect
-    MinimizeButton.MouseEnter:Connect(function()
-        TweenService:Create(MinimizeButton, TweenInfo.new(0.2), {
-            BackgroundTransparency = 0
-        }):Play()
-    end)
-    
-    MinimizeButton.MouseLeave:Connect(function()
-        TweenService:Create(MinimizeButton, TweenInfo.new(0.2), {
-            BackgroundTransparency = 1
-        }):Play()
-    end)
-    
-    -- Function to toggle UI visibility
-    local function toggleUI(visible)
-        Library.Toggled = visible
-        
-        if not visible then
-            Library.LastPosition = Main.Position
-        end
-        
-        -- Animate main frame with spring effect
-        local targetSize = visible and UDim2.new(0, 450, 0, 300) or UDim2.new(0, 450, 0, 32)
-        local targetPos = visible and (Library.LastPosition or UDim2.new(0.5, -225, 0.5, -150)) or UDim2.new(0.5, -225, 0, 10)
-        
-        -- Spring animation
-        TweenService:Create(Main, TweenInfo.new(0.6, Library.Animation.EaseInOutBack), {
-            Size = targetSize,
-            Position = targetPos
-        }):Play()
-        
-        -- Fade content
-        for _, element in pairs(Main:GetDescendants()) do
-            if element:IsA("Frame") or element:IsA("TextButton") or element:IsA("TextLabel") or element:IsA("ScrollingFrame") then
-                if element ~= TopBar and element ~= Main then
-                    TweenService:Create(element, TweenInfo.new(0.3, Library.Animation.EaseInOutQuad), {
-                        BackgroundTransparency = visible and 0 or 1
-                    }):Play()
-                end
-            end
-            if element:IsA("TextButton") or element:IsA("TextLabel") then
-                if element ~= MinimizeButton and element ~= CloseButton then
-                    TweenService:Create(element, TweenInfo.new(0.3, Library.Animation.EaseInOutQuad), {
-                        TextTransparency = visible and 0 or 1
-                    }):Play()
-                end
-            end
-        end
-        
-        -- Delayed visibility toggle
-        if not visible then
-            wait(0.2)
-        end
-        TabBar.Visible = visible
-        ContentArea.Visible = visible
-        
-        MinimizeButton.Text = visible and "−" or "+"
-    end
-    
-    -- Minimize button functionality
-    MinimizeButton.MouseButton1Click:Connect(function()
-        toggleUI(not Library.Toggled)
-    end)
-    
-    -- RightShift toggle
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
-            toggleUI(not Library.Toggled)
-        end
-    end)
-    
     -- Tab Bar
     local TabBar = Instance.new("Frame")
     TabBar.Name = "TabBar"
@@ -317,39 +221,17 @@ function Library:CreateWindow(title)
         
         -- Tab Button Click Handler
         TabButton.MouseButton1Click:Connect(function()
-            -- Create ripple effect
-            CreateRipple(TabButton)
-            
-            -- Hide all other tabs with fade
+            -- Hide all other tabs
             for _, otherTab in pairs(window.Tabs) do
-                if otherTab.Content ~= TabContent then
-                    TweenService:Create(otherTab.Content, TweenInfo.new(0.2), {
-                        BackgroundTransparency = 1,
-                        Position = UDim2.new(0.05, 0, 0, 10)
-                    }):Play()
-                    otherTab.Content.Visible = false
-                end
-                
-                TweenService:Create(otherTab.Button, TweenInfo.new(0.2), {
-                    BackgroundTransparency = 0.9,
-                    TextColor3 = Library.Theme.DarkText
-                }):Play()
+                otherTab.Content.Visible = false
+                otherTab.Button.BackgroundTransparency = 0.9
+                otherTab.Button.TextColor3 = Library.Theme.DarkText
             end
             
-            -- Show current tab with slide animation
-            TabContent.Position = UDim2.new(-0.05, 0, 0, 10)
+            -- Show current tab
             TabContent.Visible = true
-            
-            TweenService:Create(TabContent, TweenInfo.new(0.4, Library.Animation.EaseOutQuart), {
-                BackgroundTransparency = 0,
-                Position = UDim2.new(0, 10, 0, 10)
-            }):Play()
-            
-            TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0,
-                TextColor3 = Library.Theme.Text
-            }):Play()
-            
+            TabButton.BackgroundTransparency = 0
+            TabButton.TextColor3 = Library.Theme.Text
             window.CurrentTab = tab
         end)
         
@@ -396,23 +278,7 @@ function Library:CreateWindow(title)
                 }):Play()
             end)
             
-            Button.MouseButton1Click:Connect(function()
-                CreateRipple(Button)
-                
-                -- Button press animation
-                TweenService:Create(Button, TweenInfo.new(0.1, Library.Animation.EaseInOutQuad), {
-                    Size = UDim2.new(1, -4, 0, 30)
-                }):Play()
-                
-                wait(0.1)
-                
-                TweenService:Create(Button, TweenInfo.new(0.1, Library.Animation.EaseInOutQuad), {
-                    Size = UDim2.new(1, 0, 0, 32)
-                }):Play()
-                
-                callback()
-            end)
-            
+            Button.MouseButton1Click:Connect(callback)
             return Button
         end
         
@@ -494,34 +360,6 @@ function Library:CreateWindow(title)
         end
         
         return tab
-    end
-    
-    -- Add ripple effect to buttons
-    local function CreateRipple(parent)
-        local ripple = Instance.new("Frame")
-        ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ripple.BackgroundTransparency = 0.85
-        ripple.BorderSizePixel = 0
-        ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-        ripple.Size = UDim2.new(0, 0, 0, 0)
-        ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(1, 0)
-        corner.Parent = ripple
-        
-        ripple.Parent = parent
-        
-        -- Animate ripple
-        local targetSize = UDim2.new(2, 0, 2, 0)
-        local fadeTime = 0.5
-        
-        TweenService:Create(ripple, TweenInfo.new(fadeTime, Library.Animation.EaseOutQuart), {
-            Size = targetSize,
-            BackgroundTransparency = 1
-        }):Play()
-        
-        game:GetService("Debris"):AddItem(ripple, fadeTime)
     end
     
     -- Make window draggable

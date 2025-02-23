@@ -11,12 +11,16 @@ end
 
 -- Theme
 local Theme = {
-    Background = Color3.fromRGB(0, 0, 0),        -- Pure black background
-    Primary = Color3.fromRGB(10, 10, 10),        -- Nearly black
-    Secondary = Color3.fromRGB(15, 15, 15),      -- Very dark gray for hover
-    Text = Color3.fromRGB(255, 255, 255),        -- Pure white text
-    TextDark = Color3.fromRGB(120, 120, 120),    -- Darker gray text
-    Accent = Color3.fromRGB(255, 255, 255)       -- White accent
+    Background = Color3.fromRGB(0, 0, 0),        -- Pure black
+    WindowBackground = Color3.fromRGB(5, 5, 5),  -- Slightly lighter than pure black
+    Primary = Color3.fromRGB(10, 10, 10),        -- Elements background
+    Secondary = Color3.fromRGB(15, 15, 15),      -- Hover states
+    Divider = Color3.fromRGB(20, 20, 20),        -- Subtle divider lines
+    Text = Color3.fromRGB(255, 255, 255),        -- White text
+    TextDark = Color3.fromRGB(140, 140, 140),    -- Gray text
+    Accent = Color3.fromRGB(255, 255, 255),      -- White accents
+    Success = Color3.fromRGB(0, 255, 138),       -- Green for enabled states
+    Error = Color3.fromRGB(255, 64, 64)          -- Red for disabled/error states
 }
 
 local Library = {}
@@ -24,67 +28,145 @@ local Library = {}
 function Library:CreateWindow(title)
     local Window = {}
     
-    -- Main GUI
+    -- Main GUI with blur effect
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "MoonUI"
     ScreenGui.Parent = CoreGui
     
-    -- Main Frame
+    -- Background blur and dimming
+    local Backdrop = Instance.new("Frame")
+    Backdrop.Name = "Backdrop"
+    Backdrop.Size = UDim2.new(1, 0, 1, 0)
+    Backdrop.BackgroundColor3 = Theme.Background
+    Backdrop.BackgroundTransparency = 0.5
+    Backdrop.Parent = ScreenGui
+    
+    -- Main window frame with modern shadow
     local Main = Instance.new("Frame")
     Main.Name = "Main"
-    Main.Size = UDim2.new(0, 500, 0, 300)
-    Main.Position = UDim2.new(0.5, -250, 0.5, -150)
-    Main.BackgroundColor3 = Theme.Background
+    Main.Size = UDim2.new(0, 550, 0, 350)
+    Main.Position = UDim2.new(0.5, -275, 0.5, -175)
+    Main.BackgroundColor3 = Theme.WindowBackground
     Main.BorderSizePixel = 0
+    Main.ClipsDescendants = true
     Main.Parent = ScreenGui
     
+    -- Subtle shadow effect
+    local Shadow = Instance.new("ImageLabel")
+    Shadow.Name = "Shadow"
+    Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    Shadow.Size = UDim2.new(1, 47, 1, 47)
+    Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Shadow.BackgroundTransparency = 1
+    Shadow.Image = "rbxassetid://6015897843"
+    Shadow.ImageColor3 = Theme.Background
+    Shadow.ImageTransparency = 0.5
+    Shadow.Parent = Main
+    
+    -- Modern corner style
     local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 2)  -- Even smaller corners for that sharp look
+    MainCorner.CornerRadius = UDim.new(0, 6)
     MainCorner.Parent = Main
     
-    -- Title Bar
+    -- Title bar with gradient
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
-    TitleBar.Size = UDim2.new(1, 0, 0, 25)    -- Slightly smaller title bar
-    TitleBar.BackgroundColor3 = Theme.Background
+    TitleBar.Size = UDim2.new(1, 0, 0, 30)
+    TitleBar.BackgroundColor3 = Theme.Primary
     TitleBar.BorderSizePixel = 0
     TitleBar.Parent = Main
     
+    local TitleGradient = Instance.new("UIGradient")
+    TitleGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Primary),
+        ColorSequenceKeypoint.new(1, Theme.WindowBackground)
+    })
+    TitleGradient.Rotation = 90
+    TitleGradient.Parent = TitleBar
+    
+    -- Stylish title text
     local TitleText = Instance.new("TextLabel")
-    TitleText.Size = UDim2.new(1, -10, 1, 0)
+    TitleText.Size = UDim2.new(1, -20, 1, 0)
     TitleText.Position = UDim2.new(0, 10, 0, 0)
     TitleText.BackgroundTransparency = 1
     TitleText.Text = title
     TitleText.TextColor3 = Theme.Text
     TitleText.TextSize = 14
-    TitleText.Font = Enum.Font.Gotham
+    TitleText.Font = Enum.Font.GothamBold
     TitleText.TextXAlignment = Enum.TextXAlignment.Left
     TitleText.Parent = TitleBar
     
-    -- Close Button
+    -- Animated close button
     local CloseButton = Instance.new("TextButton")
     CloseButton.Size = UDim2.new(0, 30, 0, 30)
     CloseButton.Position = UDim2.new(1, -30, 0, 0)
     CloseButton.BackgroundTransparency = 1
     CloseButton.Text = "×"
     CloseButton.TextColor3 = Theme.TextDark
-    CloseButton.TextSize = 16
+    CloseButton.TextSize = 20
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.Parent = TitleBar
     
+    -- Hover animations
     CloseButton.MouseEnter:Connect(function()
-        CloseButton.TextColor3 = Theme.Text
+        TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+            TextColor3 = Theme.Error
+        }):Play()
     end)
     
     CloseButton.MouseLeave:Connect(function()
-        CloseButton.TextColor3 = Theme.TextDark
+        TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+            TextColor3 = Theme.TextDark
+        }):Play()
     end)
     
+    -- Smooth close animation
     CloseButton.MouseButton1Click:Connect(function()
+        TweenService:Create(Main, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0)
+        }):Play()
+        TweenService:Create(Backdrop, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play()
+        wait(0.2)
         ScreenGui:Destroy()
     end)
+    
+    -- Modern tab container with gradient
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Name = "Tabs"
+    TabContainer.Size = UDim2.new(0, 40, 1, -30)
+    TabContainer.Position = UDim2.new(0, 0, 0, 30)
+    TabContainer.BackgroundColor3 = Theme.Primary
+    TabContainer.BorderSizePixel = 0
+    TabContainer.Parent = Main
+    
+    local TabGradient = Instance.new("UIGradient")
+    TabGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Primary),
+        ColorSequenceKeypoint.new(1, Theme.WindowBackground)
+    })
+    TabGradient.Parent = TabContainer
+    
+    -- Content area
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "Content"
+    ContentContainer.Size = UDim2.new(1, -40, 1, -30)
+    ContentContainer.Position = UDim2.new(0, 40, 0, 30)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.Parent = Main
+    
+    -- Tab list with padding
+    local TabList = Instance.new("UIListLayout")
+    TabList.Padding = UDim.new(0, 5)
+    TabList.Parent = TabContainer
+    
+    local TabPadding = Instance.new("UIPadding")
+    TabPadding.PaddingTop = UDim.new(0, 5)
+    TabPadding.Parent = TabContainer
 
-    -- Make window draggable
+    -- Window dragging with smooth animation
     local Dragging = false
     local DragStart = nil
     local StartPos = nil
@@ -94,47 +176,39 @@ function Library:CreateWindow(title)
             Dragging = true
             DragStart = input.Position
             StartPos = Main.Position
+            
+            -- Subtle pickup animation
+            TweenService:Create(Main, TweenInfo.new(0.2), {
+                Position = Main.Position + UDim2.new(0, 0, 0, -5)
+            }):Play()
         end
     end)
     
     UserInputService.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and Dragging then
             local Delta = input.Position - DragStart
-            Main.Position = UDim2.new(
-                StartPos.X.Scale,
-                StartPos.X.Offset + Delta.X,
-                StartPos.Y.Scale,
-                StartPos.Y.Offset + Delta.Y
-            )
+            TweenService:Create(Main, TweenInfo.new(0.1), {
+                Position = UDim2.new(
+                    StartPos.X.Scale,
+                    StartPos.X.Offset + Delta.X,
+                    StartPos.Y.Scale,
+                    StartPos.Y.Offset + Delta.Y
+                )
+            }):Play()
         end
     end)
     
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             Dragging = false
+            -- Subtle drop animation
+            TweenService:Create(Main, TweenInfo.new(0.2), {
+                Position = Main.Position + UDim2.new(0, 0, 0, 5)
+            }):Play()
         end
     end)
 
     -- Tab System
-    local TabContainer = Instance.new("Frame")
-    TabContainer.Name = "Tabs"
-    TabContainer.Size = UDim2.new(0, 30, 1, -25)  -- Thinner tab bar
-    TabContainer.Position = UDim2.new(0, 0, 0, 25)
-    TabContainer.BackgroundColor3 = Theme.Primary
-    TabContainer.BorderSizePixel = 0
-    TabContainer.Parent = Main
-    
-    local TabList = Instance.new("UIListLayout")
-    TabList.Padding = UDim.new(0, 5)
-    TabList.Parent = TabContainer
-    
-    local ContentContainer = Instance.new("Frame")
-    ContentContainer.Name = "Content"
-    ContentContainer.Size = UDim2.new(1, -30, 1, -25)
-    ContentContainer.Position = UDim2.new(0, 30, 0, 25)
-    ContentContainer.BackgroundTransparency = 1
-    ContentContainer.Parent = Main
-
     local Tabs = {}
     
     function Window:CreateTab(name)
